@@ -1,6 +1,6 @@
 # Tutorial 6: Serving patterns สำหรับระบบที่มี AI
 
-**2110521 Software Architecture · สัปดาห์ที่ 13 (section 28 ต.ค. และ 1 พ.ย. 2569)** · [English](README.en.md)
+**2110521 Software Architecture · สัปดาห์ที่ 13** · [English](README.en.md)
 
 CampusEats คือแอปสั่งอาหารในมหาวิทยาลัย ลูกค้าเขียนรีวิวร้านอาหาร และทุกรีวิวจะถูกติด sentiment label (positive / negative) ด้วยโมเดล ML เพื่อให้เจ้าของร้านเห็นลูกค้าที่ไม่พอใจได้เร็ว
 
