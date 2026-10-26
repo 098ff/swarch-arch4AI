@@ -1,6 +1,6 @@
 # Tutorial 6: Serving patterns for an AI-enabled system
 
-**2110521 Software Architecture · Week 13 · Session 2 (1 Nov 2026)** · [ภาษาไทย](README.md)
+**2110521 Software Architecture · Week 13 (28 Oct and 1 Nov 2026 sections)** · [ภาษาไทย](README.md)
 
 CampusEats is a campus food-delivery app. Customers review restaurants, and every review gets a sentiment label from an ML model so restaurant owners can spot unhappy customers quickly.
 
