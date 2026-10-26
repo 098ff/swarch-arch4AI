@@ -1,7 +1,9 @@
 # Assignment 6: Deployment topologies and trade-offs
 
 **Group / กลุ่ม:**
+
 **Members (name, student ID) / สมาชิก (ชื่อ, รหัสนิสิต):**
+
 **Scenario (A, B or C) / Scenario ที่เลือก:**
 
 Choose **one** scenario below. Groups with an odd number take A or B, groups with an even number take B or C. Use your measurements from Tutorial 6 as evidence: cite run names from `results/runs.csv`. Answer in Thai or English.
@@ -11,8 +13,10 @@ Choose **one** scenario below. Groups with an odd number take A or B, groups wit
 Facts that hold in every scenario / ข้อเท็จจริงที่ใช้กับทุก scenario:
 
 - The large model serves at most **20 calls per second** (4 calls at once × about 200 ms each), and every call costs money.
+
   *large model รับได้สูงสุด **20 calls ต่อวินาที** (พร้อมกัน 4 calls × ประมาณ 200 ms ต่อ call) และทุก call มีค่าใช้จ่าย*
 - The small model is fast and cheap enough to run anywhere, including inside the review service or on a kiosk, but it is much less accurate on its own.
+
   *small model เร็วและถูกพอที่จะรันที่ไหนก็ได้ รวมถึงภายใน review service หรือบน kiosk แต่ถ้าใช้ตัวเดียวจะแม่นน้อยกว่ามาก*
 
 ## Scenarios
@@ -39,11 +43,13 @@ Facts that hold in every scenario / ข้อเท็จจริงที่�
 | T4 | Asynchronous / batch | Reviews are queued (broker, W10) or stored, and scored later in bulk<br>*รีวิวถูกเข้าคิว (broker, W10) หรือเก็บไว้ แล้วติด label ทีหลังเป็นชุด* |
 
 Combine one topology with any of the patterns from Tutorial 6: **fallback**, **cascade** and **cache**.
+
 *เลือก topology หนึ่งแบบ แล้วผสมกับ pattern จาก Tutorial 6 ได้ตามต้องการ: **fallback**, **cascade** และ **cache***
 
 ## 1. Quality requirements
 
 The three most important quality requirements for your scenario, each with a number where possible.
+
 *quality requirements ที่สำคัญที่สุด 3 ข้อของ scenario ที่เลือก ระบุตัวเลขเมื่อทำได้*
 
 | # | Quality | Requirement |
@@ -55,6 +61,7 @@ The three most important quality requirements for your scenario, each with a num
 ## 2. Design / การออกแบบ
 
 Your topology, the patterns you add, and a container-level diagram (C4 level 2). Mermaid is fine, as in W12.
+
 *topology ที่เลือก pattern ที่เพิ่ม และ diagram ระดับ container (C4 level 2) ใช้ Mermaid ได้เหมือนใน W12*
 
 ```mermaid
@@ -65,6 +72,7 @@ flowchart LR
 ## 3. Evidence / หลักฐาน
 
 Which runs support your choice? Show the numbers and, for scenario A, the capacity arithmetic: how many large-model calls per second does your design need at the peak?
+
 *run ไหนสนับสนุนการตัดสินใจ แสดงตัวเลข และสำหรับ scenario A ให้แสดงการคำนวณ capacity ด้วย: ในช่วงพีค design ของคุณต้องใช้ large model กี่ calls ต่อวินาที*
 
 | Run | What it shows / แสดงอะไร |
@@ -74,7 +82,9 @@ Which runs support your choice? Show the numbers and, for scenario A, the capaci
 
 ## 4. ADR
 
-Use the ADR format from W5. / *ใช้รูปแบบ ADR จาก W5*
+Use the ADR format from W5.
+
+*ใช้รูปแบบ ADR จาก W5*
 
 **Title:**
 
@@ -89,11 +99,13 @@ Use the ADR format from W5. / *ใช้รูปแบบ ADR จาก W5*
 - Negative:
 
 **Alternatives considered:** at least one topology you rejected, and why.
+
 *อย่างน้อยหนึ่ง topology ที่ไม่เลือก และเหตุผล*
 
 ## 5. Risk / ความเสี่ยง
 
 One way your design could fail silently in production, and the number you would monitor to notice it.
+
 *หนึ่งวิธีที่ design ของคุณอาจล้มเหลวแบบเงียบๆ ใน production และตัวเลขที่จะ monitor เพื่อให้รู้ตัว*
 
 >
