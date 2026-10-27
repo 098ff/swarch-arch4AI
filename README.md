@@ -2,30 +2,45 @@
 
 **2110521 Software Architecture · สัปดาห์ที่ 13** · [English](README.en.md)
 
-CampusEats คือแอปสั่งอาหารในมหาวิทยาลัย ลูกค้าเขียนรีวิวร้านอาหาร และทุกรีวิวจะถูกติด sentiment label (positive / negative) ด้วยโมเดล ML เพื่อให้เจ้าของร้านเห็นลูกค้าที่ไม่พอใจได้เร็ว
+CampusEats คือแอปสั่งอาหารในมหาวิทยาลัยซึ่งอนุญาตให้ลูกค้าเขียนรีวิวร้าน ทุกรีวิวจะถูกประมวลผลด้วยโมเดล Machine learning และสร้าง sentiment label (positive / negative) ให้กับรีวิวนั้นๆ เพื่อให้เจ้าของร้านเห็นลูกค้าที่ไม่พอใจได้เร็วและปรับปรุงการให้บริการได้ทันท่วงที
 
-นิสิตจะได้ระบบที่ทำงานได้แล้ว 3 services หน้าที่ของนิสิตคือเพิ่ม pattern 3 ตัวจาก lecture รอบตัวโมเดล ได้แก่ **fallback prediction**, **cascade (two-phase prediction)** และ **cached predictions** จากนั้นวัดผลว่าแต่ละ pattern ส่งผลต่อ latency, cost และ accuracy อย่างไร แล้วใช้ตัวเลขเหล่านั้นเลือก deployment topology ใน **Assignment 6**
+ใน repository นี้ นิสิตจะได้ระบบที่ทำงานได้แล้ว 3 services งานของนิสิตคือเพิ่ม design pattern 3 แบบ รอบตัวโมเดล ได้แก่
+* (1) fallback prediction
+* (2) cascade (two-phase prediction)
+* (3) cached predictions 
+
+จากนั้นวัดผลว่าแต่ละ pattern ส่งผลต่อ latency, cost และ accuracy ของระบบอย่างไร แล้วใช้ตัวเลขเหล่านั้นเลือก deployment topology
+
+C4 container diagram ของระบบ CampusEats เป็นดังด้านล่าง
 
 ```mermaid
-flowchart LR
-    C[tools/loadtest.py<br/>ฝั่ง client] --> G[gateway :8000]
-    G --> R[review service :8001<br/>business logic]
-    R -- "REST: POST /predict" --> I[inference service :8002]
-    I --> S[small model<br/>เร็ว แม่นน้อยกว่า]
-    I --> L[large model<br/>ช้า capacity จำกัด แม่นกว่า]
+C4Container
+    title CampusEats: container diagram
+    Person(customer, "Customer", "เขียนรีวิวร้าน (จำลองด้วย tools/loadtest.py)")
+    Person(owner, "Restaurant owner", "ดูรีวิวและ label ของร้านตัวเอง")
+    System_Boundary(campuseats, "CampusEats") {
+        Container(gateway, "API gateway", "Python, FastAPI, :8000", "จุดเข้าเดียวของ client ส่งต่อ /api/reviews และ /api/restaurants")
+        Container(review, "Review service", "Python, FastAPI, :8001", "เก็บรีวิวในหน่วยความจำ Task 1: fallback.py")
+        Container(inference, "Inference service", "Python, FastAPI, scikit-learn, :8002", "small model และ large model Task 2 และ 3: patterns.py")
+    }
+    Rel(customer, gateway, "ส่งรีวิว", "HTTP/JSON")
+    Rel(owner, gateway, "ดูจำนวนรีวิวตาม label", "HTTP/JSON")
+    Rel(gateway, review, "ส่งต่อ request", "HTTP/JSON")
+    Rel(review, inference, "POST /predict", "REST")
+    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
 ```
 
 | Service | Folder | งานของนิสิต |
 |---|---|---|
-| API gateway (แบบเดียวกับ W11) | `gateway/` | ไม่มี |
+| API gateway | `gateway/` | ไม่มี |
 | Review service: business service | `review_service/` | **Task 1** ใน `fallback.py` |
 | Inference service: model as a service | `inference_service/` | **Task 2 และ 3** ใน `patterns.py` |
 
-Large model ในแลบนี้แทนโมเดลราคาแพง เช่น โมเดลที่รันบน GPU หรือ LLM API แบบเสียเงิน ผลทำนายเป็นของจริง แต่ความช้าเป็นการจำลอง: แต่ละ call ใช้เวลาประมาณ 200 ms และรันพร้อมกันได้แค่ 4 calls
+โดย Large model ในความหมายของแบบฝึกหัดนี้แทน ML model ราคาแพง เช่น โมเดลขนาดใหญ่ที่ต้องรันบน GPU หรือ LLM API แบบเสียเงิน (ผลการทำนายเป็นของจริง แต่ความช้าเป็นการจำลอง) แต่ละ API call ไปยัง Model จะใช้เวลาประมาณ 200 ms และรันพร้อมกันได้แค่ 4 API calls
 
-## ก่อนเข้าเรียน (ทำที่บ้าน ประมาณ 10 นาที)
+## การเตรียม Environment
 
-ต้องมี **Python 3.10 ขึ้นไป** และ **git** ไม่ต้องใช้ Docker และไม่ต้องมี API key
+ต้องมี **Python 3.10 ขึ้นไป** และ **git**
 
 1. **Fork** repository นี้บน GitHub แล้ว clone **fork ของตัวเอง**
 2. สร้าง virtual environment และติดตั้ง packages:

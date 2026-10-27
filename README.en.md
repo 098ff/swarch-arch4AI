@@ -15,6 +15,25 @@ flowchart LR
     I --> L[large model<br/>slow, limited capacity, more accurate]
 ```
 
+The same system as a C4 container diagram:
+
+```mermaid
+C4Container
+    title CampusEats: container diagram
+    Person(customer, "Customer", "Writes restaurant reviews (simulated by tools/loadtest.py)")
+    Person(owner, "Restaurant owner", "Reads the labels of their restaurant's reviews")
+    System_Boundary(campuseats, "CampusEats") {
+        Container(gateway, "API gateway", "Python, FastAPI, :8000", "Single entry point; routes /api/reviews and /api/restaurants")
+        Container(review, "Review service", "Python, FastAPI, :8001", "Stores reviews in memory. Task 1: fallback.py")
+        Container(inference, "Inference service", "Python, FastAPI, scikit-learn, :8002", "Small and large model. Tasks 2 and 3: patterns.py")
+    }
+    Rel(customer, gateway, "Posts reviews", "HTTP/JSON")
+    Rel(owner, gateway, "Reads review counts by label", "HTTP/JSON")
+    Rel(gateway, review, "Forwards requests", "HTTP/JSON")
+    Rel(review, inference, "POST /predict", "REST")
+    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
+```
+
 | Service | Folder | Your work |
 |---|---|---|
 | API gateway (as in W11) | `gateway/` | none |
