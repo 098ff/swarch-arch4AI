@@ -34,7 +34,7 @@ from common import settings  # noqa: E402
 from data.make_data import FREQUENT  # noqa: E402
 
 RESTAURANTS = ["Canteen A", "Som Tam Corner", "Noodle Bar", "Green Kitchen", "Burger Hut"]
-COLUMNS = ["name", "strategy", "threshold", "cache", "hang_rate", "n", "p50_ms", "p95_ms",
+COLUMNS = ["name", "hang_rate", "strategy", "threshold", "cache", "n", "p50_ms", "p95_ms",
            "errors", "pending", "accuracy", "large_calls", "cache_hits"]
 
 
@@ -94,9 +94,9 @@ async def run(args):
     ok = [r for r in results if r["ok"]]
     scored = [r for r in ok if r["status"] != "pending" and r["label"] is not None]
     lat = [r["ms"] for r in ok]
-    row = {"name": args.name, "strategy": args.strategy,
+    row = {"name": args.name, "hang_rate": args.hang_rate, "strategy": args.strategy,
            "threshold": args.threshold if args.strategy == "cascade" else "",
-           "cache": args.cache, "hang_rate": args.hang_rate, "n": n,
+           "cache": args.cache, "n": n,
            "p50_ms": percentile(lat, 50), "p95_ms": percentile(lat, 95),
            "errors": n - len(ok), "pending": len(ok) - len(scored),
            "accuracy": f"{sum(r['label'] == r['truth'] for r in scored) / len(scored):.1%}" if scored else "n/a",

@@ -1,14 +1,18 @@
 # Assignment 6: Deployment topologies and trade-offs
 
-**Group / กลุ่ม:**
+**Name / ชื่อ:**
 
-**Members (name, student ID) / สมาชิก (ชื่อ, รหัสนิสิต):**
+**Student ID / รหัสนิสิต:**
+
+This is **individual work**: each student completes and submits their own copy, in their own fork.
+
+*งานนี้เป็น**งานเดี่ยว** นิสิตแต่ละคนทำและส่งงานของตัวเอง ใน fork ของตัวเอง*
 
 **Scenario (A, B or C) / Scenario ที่เลือก:**
 
-Choose **one** scenario below. Groups with an odd number take A or B, groups with an even number take B or C. Use your measurements from Tutorial 6 as evidence: cite run names from `results/runs.csv`. Answer in Thai or English.
+Choose **one** scenario below. If the last digit of your student ID is odd, take A or B; if it is even, take B or C. Use your measurements from Tutorial 6 as evidence: cite run names from `results/runs.csv`. Answer in Thai or English.
 
-เลือก scenario **หนึ่ง** ข้อด้านล่าง กลุ่มเลขคี่เลือก A หรือ B กลุ่มเลขคู่เลือก B หรือ C ใช้ผลการวัดจาก Tutorial 6 เป็นหลักฐาน โดยอ้างชื่อ run จาก `results/runs.csv` จะตอบเป็นภาษาไทยหรือภาษาอังกฤษก็ได้
+เลือก scenario **หนึ่ง** ข้อด้านล่าง ถ้าเลขตัวสุดท้ายของรหัสนิสิตเป็นเลขคี่ ให้เลือก A หรือ B ถ้าเป็นเลขคู่ ให้เลือก B หรือ C ใช้ผลการวัดจาก tutorial ที่ทำไปเป็นข้อมูลอ้างอิง โดยอ้างชื่อ run จาก `results/runs.csv` จะตอบเป็นภาษาไทยหรือภาษาอังกฤษก็ได้
 
 Facts that hold in every scenario / ข้อเท็จจริงที่ใช้กับทุก scenario:
 
@@ -21,17 +25,17 @@ Facts that hold in every scenario / ข้อเท็จจริงที่�
 
 ## Scenarios
 
-**A. Owner alerts.** When a customer posts a negative review, the restaurant owner gets a push notification within **2 seconds**. At the lunch peak, CampusEats receives **40 reviews per second**. A missed alert is acceptable; a wrong alert ("your customer is unhappy" when they are not) makes owners ignore alerts.
+**A. Owner alerts.** When a customer posts a negative review, the restaurant owner gets a push notification within **2 seconds**. At the lunch peak, CampusEats receives **40 reviews per second**. A missed alert is acceptable, but a wrong alert (for example, "your customer is unhappy" when they are happy) makes owners stop trusting alerts and, in the end, ignore them.
 
-*เมื่อลูกค้าโพสต์รีวิวเชิงลบ เจ้าของร้านต้องได้รับ push notification ภายใน **2 วินาที** ช่วงพีคตอนเที่ยง CampusEats ได้รับรีวิว **40 รายการต่อวินาที** การพลาด alert ไปบ้างยอมรับได้ แต่ alert ที่ผิด ("ลูกค้าไม่พอใจ" ทั้งที่จริงๆ ไม่ใช่) จะทำให้เจ้าของร้านเลิกสนใจ alert*
+*เมื่อลูกค้าโพสต์รีวิวเชิงลบ เจ้าของร้านจะต้องได้รับ push notification ภายใน **2 วินาที** เวลาช่วงพีคตอนเที่ยง CampusEats ได้รับรีวิวจำนวน **40 รายการต่อวินาที** การพลาด alert ไปบ้างนั้นยอมรับได้ แต่ alert ที่ผิด (เข่น "ลูกค้าไม่พอใจ" ทั้งที่จริงๆ แล้วพอใจ) จะทำให้เจ้าของร้านไม่เชื่อถือและเลิกสนใจ alert ในที่สุด*
 
-**B. Canteen kiosk.** A tablet in each canteen lets students leave a review on the spot. Canteen Wi-Fi drops several times a day for minutes at a time. Every review must be accepted, even offline. The food committee needs the labels **by the end of the day**.
+**B. Canteen kiosk.** A tablet in each canteen lets students leave a review on the spot. However, the canteen Wi-Fi is poor: the tablets lose their connection several times a day, for minutes at a time. The system must accept every review, even while a tablet is offline. Restaurant owners need the labels **by the end of the day**.
 
-*มี tablet ในแต่ละโรงอาหารให้นิสิตรีวิวได้ทันที Wi-Fi ในโรงอาหารหลุดวันละหลายครั้ง ครั้งละหลายนาที ต้องรับรีวิวได้ทุกรายการแม้ขณะ offline และคณะกรรมการอาหารต้องการ label **ภายในสิ้นวัน***
+*มี tablet ในแต่ละโรงอาหารให้นิสิตรีวิวได้ทันที อย่างไรก็ดี การเชื่อมต่อ Wi-Fi ในโรงอาหารไม่ดี ทำให้ tablet หลุดการเชื่อมต่อวันละหลายครั้ง ครั้งละหลายนาที ระบบจะต้องรับรีวิวได้ทุกรายการแม้ขณะที่กำลัง offline อยู่ และเจ้าของร้านต้องการ label **ภายในสิ้นวัน***
 
-**C. Weekly report.** The university food committee wants a weekly sentiment report per restaurant. Nothing is real-time. **Accuracy matters most** and **cost must be minimal**.
+**C. Weekly report.** Restaurant owners want a weekly sentiment report. Nothing in producing this report has to be real-time. **Accuracy matters most** and **cost must be minimal**.
 
-*คณะกรรมการอาหารของมหาวิทยาลัยต้องการรายงาน sentiment รายสัปดาห์ของแต่ละร้าน ไม่มีอะไรต้อง real-time **accuracy สำคัญที่สุด** และ **ค่าใช้จ่ายต้องน้อยที่สุด***
+*เจ้าของร้านต้องการรายงาน sentiment รายสัปดาห์ ไม่มีอะไรที่จะต้องทำแบบ real-time ในการออกรายงานนี้ ความแม่นยำ **(accuracy) สำคัญที่สุด** และ **ค่าใช้จ่ายต้องน้อยที่สุด***
 
 ## Topologies and patterns to choose from / Topology และ pattern ที่เลือกใช้ได้
 
@@ -60,9 +64,9 @@ The three most important quality requirements for your scenario, each with a num
 
 ## 2. Design / การออกแบบ
 
-Your topology, the patterns you add, and a container-level diagram (C4 level 2). Mermaid is fine, as in W12.
+Your topology, the patterns you add, and a container-level diagram (C4 level 2). The C4 diagram must be written in Mermaid.
 
-*topology ที่เลือก pattern ที่เพิ่ม และ diagram ระดับ container (C4 level 2) ใช้ Mermaid ได้เหมือนใน W12*
+*topology ที่เลือก pattern ที่เพิ่ม และ diagram ระดับ container (C4 level 2) เชียนด้วย Mermaid *
 
 ```mermaid
 flowchart LR
@@ -73,7 +77,7 @@ flowchart LR
 
 Which runs support your choice? Show the numbers and, for scenario A, the capacity arithmetic: how many large-model calls per second does your design need at the peak?
 
-*run ไหนสนับสนุนการตัดสินใจ แสดงตัวเลข และสำหรับ scenario A ให้แสดงการคำนวณ capacity ด้วย: ในช่วงพีค design ของคุณต้องใช้ large model กี่ calls ต่อวินาที*
+*run ไหนที่สนับสนุนการตัดสินใจของนิสิต ให้นิสิตแสดงตัวเลขประกอบ และสำหรับ scenario A ให้นิสิตแสดงการคำนวณ capacity ด้วย เพื่อแสดงว่าในช่วงพีคนั้น design ของนิสิตต้องใช้ large model กี่ calls ต่อวินาที*
 
 | Run | What it shows / แสดงอะไร |
 |---|---|
@@ -101,11 +105,5 @@ Use the ADR format from W5.
 **Alternatives considered:** at least one topology you rejected, and why.
 
 *อย่างน้อยหนึ่ง topology ที่ไม่เลือก และเหตุผล*
-
-## 5. Risk / ความเสี่ยง
-
-One way your design could fail silently in production, and the number you would monitor to notice it.
-
-*หนึ่งวิธีที่ design ของคุณอาจล้มเหลวแบบเงียบๆ ใน production และตัวเลขที่จะ monitor เพื่อให้รู้ตัว*
 
 >

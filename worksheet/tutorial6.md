@@ -1,22 +1,17 @@
 # Tutorial 6 worksheet: serving patterns
 
-**Group / กลุ่ม:**
+**Name / ชื่อ:**
+**Student ID / รหัสนิสิต:**
 
-**Members (name, student ID) / สมาชิก (ชื่อ, รหัสนิสิต):**
+This is **individual work**: each student completes and submits their own copy, in their own fork.
+
+*งานนี้เป็น**งานเดี่ยว** นิสิตแต่ละคนทำและส่งงานของตัวเอง โดยใช้ forked repository ของตัวเอง*
 
 Copy result rows from `results/runs.csv` (or the load test's output) into the tables. Keep answers short: one to three sentences each. Answer in Thai or English.
 
-คัดลอกผลจาก `results/runs.csv` (หรือจาก output ของ load test) ลงในตาราง ตอบสั้นๆ ข้อละ 1–3 ประโยค จะตอบเป็นภาษาไทยหรือภาษาอังกฤษก็ได้
+ตอนที่ตอบ ให้นิสิตคัดลอกผลจาก `results/runs.csv` (หรือจาก output ของ load test) ลงในตาราง ตอบสั้นๆ ข้อละ 1–3 ประโยค จะตอบเป็นภาษาไทยหรือภาษาอังกฤษก็ได้
 
-## How did you write the code? / เขียนโค้ดอย่างไร
-
-| Task | By hand / AI agent (which one?)<br>เขียนเอง / ใช้ AI agent (ตัวไหน) | What did you have to check or fix?<br>ต้องตรวจหรือแก้อะไรบ้าง |
-|---|---|---|
-| 1 Fallback | | |
-| 2 Cascade | | |
-| 3 Cache | | |
-
-## Task 0: Baseline
+## Task 0: Baseline (copy the baseline results from `results/runs.csv` here / copy ผลลัพธ์ของ baseline จาก `results/runs.csv` มาวางที่นี่)
 
 | Run | p50 ms | p95 ms | accuracy | large calls |
 |---|---|---|---|---|
@@ -29,7 +24,7 @@ Copy result rows from `results/runs.csv` (or the load test's output) into the ta
 
 >
 
-## Task 1: Fallback prediction
+## Task 1: Fallback prediction (copy the Task 1 results from `results/runs.csv` here / copy ผลลัพธ์ของ Task 1 จาก `results/runs.csv` มาวางที่นี่)
 
 | Run | run time (s) | p50 ms | p95 ms | errors | pending | accuracy |
 |---|---|---|---|---|---|---|
@@ -60,7 +55,7 @@ Copy result rows from `results/runs.csv` (or the load test's output) into the ta
 
 >
 
-## Task 2: Cascade
+## Task 2: Cascade (copy the Task 2 results from `results/runs.csv` here / copy ผลลัพธ์ของ Task 2 จาก `results/runs.csv` มาวางที่นี่)
 
 | Run | threshold | p50 ms | p95 ms | accuracy | large calls |
 |---|---|---|---|---|---|
@@ -87,7 +82,7 @@ Copy result rows from `results/runs.csv` (or the load test's output) into the ta
 
 >
 
-## Task 3: Cached predictions
+## Task 3: Cached predictions (copy the Task 3 results from `results/runs.csv` here / copy ผลลัพธ์ของ Task 3 จาก `results/runs.csv` มาวางที่นี่)
 
 | Run | p50 ms | p95 ms | accuracy | large calls | cache hits |
 |---|---|---|---|---|---|
@@ -107,8 +102,8 @@ Copy result rows from `results/runs.csv` (or the load test's output) into the ta
 
 ## Debrief
 
-**Q4.** Name one thing these measurements told you that you could not have known from the lecture alone.
+**Q4.** Name one thing you learned from these measurements that the lecture did not cover.
 
-*ยกตัวอย่างหนึ่งสิ่งที่ได้เรียนรู้จากการวัดผลครั้งนี้ ที่จะไม่รู้ถ้าฟังแค่ lecture*
+*ยกตัวอย่างหนึ่งสิ่งที่ได้เรียนรู้จากการวัดผลครั้งนี้ ที่ไม่มีพูดถึงใน lecture*
 
 >
