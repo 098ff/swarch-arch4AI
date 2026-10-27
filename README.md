@@ -133,6 +133,8 @@ Cascade ไม่ใช่โมเดลตัวที่ 3 แต่เป็
 - **Terminal 1:** `python run_all.py` ต้อง restart (Ctrl+C แล้วรันใหม่) **ทุกครั้งที่แก้โค้ด**
 - **Terminal 2:** รัน tests และ load tests
 
+ในกล่องคำสั่ง บรรทัดที่ขึ้นต้นด้วย `#` เป็น comment ไม่ต้องพิมพ์ (Windows cmd ไม่รู้จัก comment แบบ `#`)
+
 Load test จะส่งรีวิว 200 รายการผ่าน gateway แล้วพิมพ์ผลออกมา 1 แถว ทุกแถวจะถูกต่อท้ายใน `results/runs.csv` ด้วย (ไฟล์นี้ต้องส่ง)
 
 ```bash
@@ -191,8 +193,10 @@ Load test จับเวลาแต่ละ request ตั้งแต่ cli
 # Task 0: Baseline
 
 ```bash
-python tools/loadtest.py --name t0-large                    # ทุกรีวิวไปที่ large model
-python tools/loadtest.py --name t0-small --strategy small   # ทุกรีวิวไปที่ small model
+# ทุกรีวิวไปที่ large model
+python tools/loadtest.py --name t0-large
+# ทุกรีวิวไปที่ small model
+python tools/loadtest.py --name t0-small --strategy small
 ```
 ให้นิสิตสังเกตผลของการรันทั้งสองครั้ง ว่าแตกต่างกันอย่างไร ระหว่าง large และ small models
 
@@ -272,4 +276,7 @@ git push
 | ทุก request ล้มเหลว และมี `NotImplementedError` ใน terminal 1 | strategy ที่รันอยู่ยังไม่ได้ทำ TODO |
 | แก้โค้ดแล้วไม่มีผล | restart `run_all.py` ทุกครั้งที่แก้โค้ด |
 | `ModuleNotFoundError` | activate virtual environment และรันคำสั่งจาก root folder ของ repository |
-| port 8000–8002 ถูกโปรแกรมอื่นใช้อยู่ | ตั้ง port อื่น เช่น `GATEWAY_PORT=9000 REVIEW_PORT=9001 INFERENCE_PORT=9002` ใน **ทั้งสอง** terminal |
+| port 8000–8002 ถูกโปรแกรมอื่นใช้อยู่ | ตั้ง port อื่นใน **ทั้งสอง** terminal ก่อนรันคำสั่งใดๆ:<br>macOS/Linux: `export GATEWAY_PORT=9000 REVIEW_PORT=9001 INFERENCE_PORT=9002`<br>Windows PowerShell: `$env:GATEWAY_PORT=9000; $env:REVIEW_PORT=9001; $env:INFERENCE_PORT=9002`<br>Windows cmd: `set GATEWAY_PORT=9000`, `set REVIEW_PORT=9001` และ `set INFERENCE_PORT=9002` |
+| Windows PowerShell: `running scripts is disabled on this system` ตอน activate | รัน `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` ครั้งเดียว แล้ว activate ใหม่ หรือใช้ cmd แทน PowerShell |
+| Windows: พิมพ์ `python3` แล้วเปิด Microsoft Store | ใช้ `py` แทน `python3` ตอนสร้าง virtual environment: `py -m venv .venv` |
+| Ubuntu/Debian: `ensurepip is not available` ตอนสร้าง venv | ติดตั้ง venv package (`sudo apt install python3-venv`) แล้วสร้าง venv ใหม่ และเช็กว่า `python3 --version` เป็น 3.10 ขึ้นไป |

@@ -136,6 +136,8 @@ Open **two terminals** and activate the virtual environment in both:
 - **Terminal 1:** `python run_all.py`. Restart it (Ctrl+C, then run it again) **every time you change the code**.
 - **Terminal 2:** run tests and load tests.
 
+In the command blocks, lines that start with `#` are comments: do not type them. (Windows cmd does not understand `#` comments.)
+
 The load test sends 200 reviews through the gateway and prints one row of results. Every row is also appended to `results/runs.csv`, which you submit.
 
 ```bash
@@ -196,8 +198,10 @@ Write your results and answers in [`worksheet/tutorial6.md`](worksheet/tutorial6
 ### Task 0: Baseline
 
 ```bash
-python tools/loadtest.py --name t0-large                    # every review goes to the large model
-python tools/loadtest.py --name t0-small --strategy small   # every review goes to the small model
+# every review goes to the large model
+python tools/loadtest.py --name t0-large
+# every review goes to the small model
+python tools/loadtest.py --name t0-small --strategy small
 ```
 
 Look at the results of the two runs: how do the large and small models differ?
@@ -282,4 +286,7 @@ Submit **the URL of your fork** on MyCourseVille.
 | Every request fails, and terminal 1 shows `NotImplementedError` | The strategy you are running has a TODO that is not done yet. |
 | Your change has no effect | Restart `run_all.py` after every code change. |
 | `ModuleNotFoundError` | Activate the virtual environment, and run commands from the repository's root folder. |
-| Ports 8000–8002 are used by another program | Set other ports, e.g. `GATEWAY_PORT=9000 REVIEW_PORT=9001 INFERENCE_PORT=9002`, in **both** terminals. |
+| Ports 8000–8002 are used by another program | Set other ports in **both** terminals, before running any command:<br>macOS/Linux: `export GATEWAY_PORT=9000 REVIEW_PORT=9001 INFERENCE_PORT=9002`<br>Windows PowerShell: `$env:GATEWAY_PORT=9000; $env:REVIEW_PORT=9001; $env:INFERENCE_PORT=9002`<br>Windows cmd: `set GATEWAY_PORT=9000`, `set REVIEW_PORT=9001` and `set INFERENCE_PORT=9002` |
+| Windows PowerShell: `running scripts is disabled on this system` when activating | Run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, then activate again. Or use cmd instead of PowerShell. |
+| Windows: `python3` opens the Microsoft Store | Use `py` instead of `python3` to create the virtual environment: `py -m venv .venv` |
+| Ubuntu/Debian: `ensurepip is not available` when creating the venv | Install the venv package (`sudo apt install python3-venv`), then create the venv again. Check that `python3 --version` is 3.10 or newer. |
