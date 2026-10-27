@@ -1,4 +1,4 @@
-# Assignment 6: Deployment topologies and trade-offs
+# Task 4: Deployment topologies and trade-offs
 
 **Name / ชื่อ:**
 
@@ -27,7 +27,7 @@ Facts that hold in every scenario / ข้อเท็จจริงที่�
 
 **A. Owner alerts.** When a customer posts a negative review, the restaurant owner gets a push notification within **2 seconds**. At the lunch peak, CampusEats receives **40 reviews per second**. A missed alert is acceptable, but a wrong alert (for example, "your customer is unhappy" when they are happy) makes owners stop trusting alerts and, in the end, ignore them.
 
-*เมื่อลูกค้าโพสต์รีวิวเชิงลบ เจ้าของร้านจะต้องได้รับ push notification ภายใน **2 วินาที** เวลาช่วงพีคตอนเที่ยง CampusEats ได้รับรีวิวจำนวน **40 รายการต่อวินาที** การพลาด alert ไปบ้างนั้นยอมรับได้ แต่ alert ที่ผิด (เข่น "ลูกค้าไม่พอใจ" ทั้งที่จริงๆ แล้วพอใจ) จะทำให้เจ้าของร้านไม่เชื่อถือและเลิกสนใจ alert ในที่สุด*
+*เมื่อลูกค้าโพสต์รีวิวเชิงลบ เจ้าของร้านจะต้องได้รับ push notification ภายใน **2 วินาที** เวลาช่วงพีคตอนเที่ยง CampusEats ได้รับรีวิวจำนวน **40 รายการต่อวินาที** การพลาด alert ไปบ้างนั้นยอมรับได้ แต่ alert ที่ผิด (เช่น "ลูกค้าไม่พอใจ" ทั้งที่จริงๆ แล้วพอใจ) จะทำให้เจ้าของร้านไม่เชื่อถือและเลิกสนใจ alert ในที่สุด*
 
 **B. Canteen kiosk.** A tablet in each canteen lets students leave a review on the spot. However, the canteen Wi-Fi is poor: the tablets lose their connection several times a day, for minutes at a time. The system must accept every review, even while a tablet is offline. Restaurant owners need the labels **by the end of the day**.
 
@@ -66,11 +66,18 @@ The three most important quality requirements for your scenario, each with a num
 
 Your topology, the patterns you add, and a container-level diagram (C4 level 2). The C4 diagram must be written in Mermaid.
 
-*topology ที่เลือก pattern ที่เพิ่ม และ diagram ระดับ container (C4 level 2) เชียนด้วย Mermaid *
+*topology ที่เลือก pattern ที่เพิ่ม และ diagram ระดับ container (C4 level 2) เขียนด้วย Mermaid*
 
 ```mermaid
-flowchart LR
-    %% your containers and arrows here
+C4Container
+    title Your design: container diagram
+    %% Replace the example below with your own people, containers and relationships.
+    %% See the CampusEats C4 diagram in README.md for the full syntax.
+    Person(customer, "Customer", "Writes restaurant reviews")
+    System_Boundary(campuseats, "CampusEats") {
+        Container(review, "Review service", "Python, FastAPI", "What it does")
+    }
+    Rel(customer, review, "Posts reviews", "HTTP/JSON")
 ```
 
 ## 3. Evidence / หลักฐาน

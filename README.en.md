@@ -178,7 +178,7 @@ For example, in the output above `p50_ms` = 497 and `p95_ms` = 581. Half the rev
 
 #### Note 2: Write the code by hand or with an AI agent
 
-Each task is a short TODO (4–25 lines). You can write it yourself, or ask any coding agent (Copilot, Claude Code, Codex, Cursor, …) to do it. The agent's rules are in [`AGENTS.md`](AGENTS.md). Whichever you choose, record in the worksheet how each task was done and what you had to fix. **However, the answers to the questions and the ADR must be your own reasoning.**
+Each task is a short TODO (4–25 lines). You can write it yourself, or ask any coding agent (Copilot, Claude Code, Codex, Cursor, …) to do it. The agent's rules are in [`AGENTS.md`](AGENTS.md). **However, the answers to the questions and the ADR must be your own reasoning.**
 
 ## Tasks
 
@@ -190,7 +190,7 @@ Write your results and answers in [`worksheet/tutorial6.md`](worksheet/tutorial6
 | 0:10 | **Task 1** Fallback prediction (15 min) |
 | 0:25 | **Task 2** Cascade (20 min) |
 | 0:45 | **Task 3** Cached predictions (10 min) |
-| 0:55 | **Assignment 6** Deployment decision (15 min) |
+| 0:55 | **Task 4** Deployment decision (15 min) |
 | 1:10 | Debrief, then commit, push and submit (5 min) |
 
 ### Task 0: Baseline
@@ -267,7 +267,7 @@ In this task, follow [`worksheet/assignment6.md`](worksheet/assignment6.md): cho
 
 ```bash
 git add worksheet/ results/ review_service/ inference_service/
-git commit -m "Tutorial 6 and Assignment 6"
+git commit -m "Tutorial 6"
 git push
 ```
 

@@ -4,8 +4,8 @@
 
 *งานนี้เป็น**งานเดี่ยว** นิสิตแต่ละคนทำและส่งงานของตัวเอง โดยใช้ forked repository ของตัวเอง*
 ## ไฟล์ที่ใช้เป็นคำตอบ
-* `worksheet\tutorial6.md`
-* `worksheet\assignment6.md`
+* `worksheet/tutorial6.md`
+* `worksheet/assignment6.md`
 
 ## ข้อมูลเบื้องต้นของระบบ CampusEats
 
@@ -45,7 +45,7 @@ C4Container
 
 ## Requirements ของ CampusEats
 
-Requirements ด้านล่างนี้เป็นของระบบปัจจุบัน ระหว่างการทำแบบฝีึกหัดนี้ นิสิตจะเปลี่ยนหรือเพิ่ม requirements เหล่านี้บางส่วน
+Requirements ด้านล่างนี้เป็นของระบบปัจจุบัน ระหว่างการทำแบบฝึกหัดนี้ นิสิตจะเปลี่ยนหรือเพิ่ม requirements เหล่านี้บางส่วน
 
 **Functional requirements**
 
@@ -152,7 +152,7 @@ python tools/loadtest.py --name baseline
 | Column | ความหมาย |
 |---|---|
 | `name` | ชื่อของ run ที่ตั้งด้วย `--name` |
-| `hang_rate` | สัดส่วนของ calls ไปยัง large model ที่ถูกทำให้ค้าง 20 วินาที (`--hang-rate`, ที่นิสิตต้องทำใน Task 1) |
+| `hang_rate` | สัดส่วนของ calls ไปยัง large model ที่ถูกทำให้ค้าง 20 วินาที (`--hang-rate`, ใช้ใน Task 1) |
 | `strategy` | โมเดลที่ใช้ตอบ (`--strategy`): `large` (ค่าเริ่มต้น), `small` หรือ `cascade` (ที่นิสิตต้องทำใน Task 2) |
 | `threshold` | confidence threshold ของ cascade (`--threshold`) แสดงค่าว่างถ้า strategy ไม่ใช่ `cascade` |
 | `cache` | เปิดหรือปิด prediction cache (`--cache on`, ที่นิสิตต้องทำใน Task 3) |
@@ -173,7 +173,7 @@ Load test จับเวลาแต่ละ request ตั้งแต่ cli
 ตัวอย่าง: ในผลด้านบน `p50_ms` = 497 และ `p95_ms` = 581 แปลว่าครึ่งหนึ่งของรีวิวได้คำตอบภายในประมาณครึ่งวินาที และ 19 ใน 20 รีวิวได้คำตอบภายใน 0.58 วินาที ส่วนอีก 1 ใน 20 ช้ากว่านั้น
 
 #### Note 2: นิสิตจะเขียนโค้ดเองหรือใช้ AI agent ก็ได้
-แต่ละ task จะใส่ไว้เป็น TODO สั้นๆ (4–25 บรรทัด) นิสิตจะเขียนเอง หรือสั่ง coding agent ตัวใดก็ได้ (Copilot, Claude Code, Codex, Cursor, …) กฎของ agent อยู่ใน [`AGENTS.md`](AGENTS.md) ไม่ว่านิสิตเลือกทำแบบไหน ให้บันทึกใน worksheet ว่าแต่ละ task ทำอย่างไร และต้องแก้อะไรบ้าง **อย่าไรก็ดี คำตอบของคำถามและ ADR ต้องเป็นเหตุผลของนิสิตเอง**
+แต่ละ task จะใส่ไว้เป็น TODO สั้นๆ (4–25 บรรทัด) นิสิตจะเขียนเอง หรือสั่ง coding agent ตัวใดก็ได้ (Copilot, Claude Code, Codex, Cursor, …) กฎของ agent อยู่ใน [`AGENTS.md`](AGENTS.md) **อย่างไรก็ดี คำตอบของคำถามและ ADR ต้องเป็นเหตุผลของนิสิตเอง**
 
 ## Tasks
 
@@ -185,7 +185,7 @@ Load test จับเวลาแต่ละ request ตั้งแต่ cli
 | 0:10 | **Task 1** Fallback prediction (15 นาที) |
 | 0:25 | **Task 2** Cascade (20 นาที) |
 | 0:45 | **Task 3** Cached predictions (10 นาที) |
-| 0:55 | **Assignment 6** Deployment decision (15 นาที) |
+| 0:55 | **Task 4** Deployment decision (15 นาที) |
 | 1:10 | Debrief แล้ว commit, push และส่งงาน (5 นาที) |
 
 # Task 0: Baseline
@@ -194,7 +194,7 @@ Load test จับเวลาแต่ละ request ตั้งแต่ cli
 python tools/loadtest.py --name t0-large                    # ทุกรีวิวไปที่ large model
 python tools/loadtest.py --name t0-small --strategy small   # ทุกรีวิวไปที่ small model
 ```
-ให้นิสิตสังเกตุผลของการรันทั้งสองครั้ง ว่าแตกต่างกันอย่างไร ระหว่าง large และ small models
+ให้นิสิตสังเกตผลของการรันทั้งสองครั้ง ว่าแตกต่างกันอย่างไร ระหว่าง large และ small models
 
 # Task 1: Fallback prediction (`review_service/fallback.py`)
 
@@ -236,7 +236,7 @@ python tools/loadtest.py --name t2-0.7 --strategy cascade --threshold 0.7
 python tools/loadtest.py --name t2-0.8 --strategy cascade --threshold 0.8
 python tools/loadtest.py --name t2-0.9 --strategy cascade --threshold 0.9
 ```
-ให้นิสิตสังเกตุว่าผลลัพธ์ที่ได้ แตกต่างไปอย่างไร?
+ให้นิสิตสังเกตว่าผลลัพธ์ที่ได้ แตกต่างไปอย่างไร?
 
 # Task 3: Cached predictions (`inference_service/patterns.py`)
 
@@ -257,7 +257,7 @@ python tools/loadtest.py --name t3-cache --strategy cascade --threshold 0.7 --ca
 
 ```bash
 git add worksheet/ results/ review_service/ inference_service/
-git commit -m "Tutorial 6 and Assignment 6"
+git commit -m "Tutorial 6"
 git push
 ```
 
