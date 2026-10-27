@@ -1,4 +1,4 @@
-# Tutorial 6: Serving patterns สำหรับระบบที่มี AI
+# Tutorial 6: Design patterns สำหรับระบบที่มี AI
 
 **2110521 Software Architecture · สัปดาห์ที่ 13** · [English](README.en.md)
 
