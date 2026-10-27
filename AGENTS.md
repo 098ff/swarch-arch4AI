@@ -22,7 +22,7 @@ Change only the TODO parts of these files. Keep the existing function signatures
 ## The worksheet and the ADR
 
 - You may run the tests and the load test and copy numbers from `results/runs.csv` into the tables in `worksheet/`.
-- Do **not** write answers to the worksheet questions, the ADR or the design reasoning in `worksheet/assignment6.md`. If asked, explain the concepts and point the student to their own measurements instead.
+- Do **not** write answers to the worksheet questions, the ADR or the design reasoning in `worksheet/task4.md`. If asked, explain the concepts and point the student to their own measurements instead.
 
 ## How to work
 

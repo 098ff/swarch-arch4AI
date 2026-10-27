@@ -6,8 +6,8 @@
 
 ## Files for your answers
 
-* `worksheet/tutorial6.md`
-* `worksheet/assignment6.md`
+* `worksheet/task1-3.md`
+* `worksheet/task4.md`
 
 ## About the CampusEats system
 
@@ -184,7 +184,7 @@ Each task is a short TODO (4–25 lines). You can write it yourself, or ask any 
 
 ## Tasks
 
-Write your results and answers in [`worksheet/tutorial6.md`](worksheet/tutorial6.md).
+Write your results and answers in [`worksheet/task1-3.md`](worksheet/task1-3.md).
 
 | Time | Step |
 |---|---|
@@ -265,7 +265,7 @@ Compare the results with the runs before you added cached predictions: what chan
 
 ### Task 4: Deployment topologies and trade-offs
 
-In this task, follow [`worksheet/assignment6.md`](worksheet/assignment6.md): choose a suitable deployment topology for a CampusEats scenario, support your decision with your measurements, and record it as an ADR.
+In this task, follow [`worksheet/task4.md`](worksheet/task4.md): choose a suitable deployment topology for a CampusEats scenario, support your decision with your measurements, and record it as an ADR.
 
 ## Submit
 

@@ -4,8 +4,8 @@
 
 *งานนี้เป็น**งานเดี่ยว** นิสิตแต่ละคนทำและส่งงานของตัวเอง โดยใช้ forked repository ของตัวเอง*
 ## ไฟล์ที่ใช้เป็นคำตอบ
-* `worksheet/tutorial6.md`
-* `worksheet/assignment6.md`
+* `worksheet/task1-3.md`
+* `worksheet/task4.md`
 
 ## ข้อมูลเบื้องต้นของระบบ CampusEats
 
@@ -179,7 +179,7 @@ Load test จับเวลาแต่ละ request ตั้งแต่ cli
 
 ## Tasks
 
-ให้นิสิตเขียนผลและคำตอบลงใน [`worksheet/tutorial6.md`](worksheet/tutorial6.md)
+ให้นิสิตเขียนผลและคำตอบลงใน [`worksheet/task1-3.md`](worksheet/task1-3.md)
 
 | เวลา | ขั้นตอน |
 |---|---|
@@ -255,7 +255,7 @@ python tools/loadtest.py --name t3-cache --strategy cascade --threshold 0.7 --ca
 
 # Task 4: Deployment topologies and trade-offs
 
-ใน Task 4 นี้ ให้นิสิตทำตาม [`worksheet/assignment6.md`](worksheet/assignment6.md): โดยเลือก deployment topology ที่เหมาะสมสำหรับ scenario ของ CampusEats ให้นิสิตสนับสนุนการตัดสินใจด้วยตัวเลขที่วัดได้ และบันทึกเป็น ADR
+ใน Task 4 นี้ ให้นิสิตทำตาม [`worksheet/task4.md`](worksheet/task4.md): โดยเลือก deployment topology ที่เหมาะสมสำหรับ scenario ของ CampusEats ให้นิสิตสนับสนุนการตัดสินใจด้วยตัวเลขที่วัดได้ และบันทึกเป็น ADR
 
 ## การส่งงาน 
 
