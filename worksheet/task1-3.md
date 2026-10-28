@@ -34,32 +34,44 @@ Cost / Compute: 100% of requests hit the expensive large model, consuming GPU/AP
 
 | Run | run time (s) | p50 ms | p95 ms | errors | pending | accuracy |
 |---|---|---|---|---|---|---|
-| t1-before | | | | | | |
-| t1-after | | | | | | |
+| t1-before | 30.3 | 244 | 407 | 21 | 0 | 92.7% |
+| t1-after | 9.7 | 388 | 1011 | 0 | 28 | 93.0% |
 
 **Q1.1** In `t1-before`, p50 can look *better* than the baseline. Why is p50 misleading here? Which column tells the real story?
 
 *ใน `t1-before` ค่า p50 อาจดู "ดีกว่า" baseline ทำไม p50 จึงทำให้เข้าใจผิดในกรณีนี้ และ column ไหนบอกความจริง*
 
->
+> Observation: In t1-before, p50 appears to be 244 ms (which looks faster than t0-large's 490 ms!).
+
+> Why it's misleading: loadtest.py computes percentiles (p50, p95) only on successful requests. Requests that hung for >10 s timed out on the client side and were dropped into errors. They were excluded from the latency calculations, artificially deflating p50.
+
+> Columns that tell the truth: Look at errors (21 requests failed completely) and total run time (30.3 s vs 9.7 s).
 
 **Q1.2** The hang affects only 10% of large-model calls. Why is it worse for the system than 10% of reviews being slow? Think about what a waiting request holds on to in the review service and the gateway.
 
 *การค้างเกิดกับ calls ไปยัง large model แค่ 10% ทำไมจึงส่งผลต่อระบบแย่กว่าการที่รีวิว 10% ช้าลงเฉยๆ ลองคิดว่า request ที่รออยู่ถือทรัพยากรอะไรไว้ใน review service และ gateway*
 
->
+> Resource Exhaustion / Head-of-line blocking:
+
+    * The large model only allows 4 concurrent calls (LARGE_CAPACITY = 4). When calls hang for 20 seconds, all 4 concurrency slots quickly become occupied.
+    * In review_service and gateway, each hanging request ties up an open socket, HTTP connection, memory buffer, and event loop coroutine.
+    * Even non-hanging requests get queued behind the hung ones, causing a cascade of delays across the entire system.
 
 **Q1.3** Pending reviews have no label. Suggest what should happen to them, and name the topology from the lecture that does it.
 
 *รีวิวที่ pending ยังไม่มี label ควรจัดการกับรีวิวเหล่านี้อย่างไร และ topology ใดจาก lecture ที่ทำแบบนั้น*
 
->
+> What to do: Since the review text is already safely saved in the database, a background worker can pick up unlabelled pending reviews later (e.g. during off-peak hours) and send them for sentiment scoring.
+
+> Topology name: Topology T4: Asynchronous / Batch processing (using a message queue / broker / scheduled background job).
 
 **Q1.4** We chose a 1-second timeout. What goes wrong if it is 0.1 s? And if it is 10 s?
 
 *เราเลือก timeout 1 วินาที จะเกิดปัญหาอะไรถ้าตั้งเป็น 0.1 วินาที และถ้าตั้งเป็น 10 วินาที*
 
->
+> If 0.1 s (100 ms): Normal large model inference takes ~200 ms. A 0.1 s timeout is shorter than normal healthy latency, causing healthy requests to prematurely timeout. Nearly all reviews would unnecessarily end up as pending.
+
+> If 10 s: Hanging requests hold server connections and concurrency slots for 10 full seconds. Tail latency (p95) skyrockets to 10 seconds, client buffers fill up, and users experience a terrible waiting delay before fallback kicks in.
 
 ## Task 2: Cascade (copy the Task 2 results from `results/runs.csv` here / copy ผลลัพธ์ของ Task 2 จาก `results/runs.csv` มาวางที่นี่)
 
