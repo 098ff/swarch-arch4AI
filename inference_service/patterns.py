@@ -80,36 +80,22 @@ class PredictionCache:
 
     @staticmethod
     def key(text):
-        # TODO (Task 3): normalise text so "  Delicious! " and "delicious!" give the same key.
-        #   About 1 line. Return a string that is:
-        #     - all lower case (str.lower())
-        #     - without spaces at the start and end
-        #     - with runs of spaces inside squeezed to one: "Too   salty" -> "too salty"
-        #   Hint: text.split() with no argument splits on any run of whitespace
-        #   and drops the ends; " ".join(...) glues the words back together.
-        #   Keep the punctuation: "Delicious!" and "Delicious" may stay different.
-        raise NotImplementedError("Task 3: implement PredictionCache.key()")
+        return " ".join(text.lower().split())
 
     def get(self, text):
         """Return the cached Prediction for text, or None. Count a hit or a miss."""
-        # TODO (Task 3): about 7 lines.
-        #   1. Turn text into a key with self.key(text).
-        #   2. If the key is in self._data (a hit):
-        #        - mark it as just used: self._data.move_to_end(key)
-        #        - add 1 to self.hits
-        #        - return the stored Prediction
-        #   3. Otherwise (a miss): add 1 to self.misses and return None.
-        #   Without move_to_end, the cache forgets what was used recently, and
-        #   test_size_limit_evicts_least_recently_used fails.
-        raise NotImplementedError("Task 3: implement PredictionCache.get()")
+        k = self.key(text)
+        if k in self._data:
+            self._data.move_to_end(k)
+            self.hits += 1
+            return self._data[k]
+        self.misses += 1
+        return None
 
     def put(self, text, prediction):
         """Store prediction for text; evict the least recently used entry when over max_size."""
-        # TODO (Task 3): about 5 lines.
-        #   1. Turn text into a key with self.key(text).
-        #   2. Store the prediction under that key, and mark it as just used
-        #      (move_to_end), in case the key was already there.
-        #   3. If the cache now holds more than self.max_size entries, remove
-        #      the least recently used one: self._data.popitem(last=False).
-        #   put() does not count hits or misses: only get() does.
-        raise NotImplementedError("Task 3: implement PredictionCache.put()")
+        k = self.key(text)
+        self._data[k] = prediction
+        self._data.move_to_end(k)
+        if len(self._data) > self.max_size:
+            self._data.popitem(last=False)

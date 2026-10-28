@@ -118,19 +118,36 @@ Cost / Compute: 100% of requests hit the expensive large model, consuming GPU/AP
 
 | Run | p50 ms | p95 ms | accuracy | large calls | cache hits |
 |---|---|---|---|---|---|
-| t3-cache | | | | | |
+| t3-cache | 5 | 535 | 93.0% | 38% | 35% |
 
 **Q3.1** Which reviews benefit from the cache, and which never will?
 
 *รีวิวแบบไหนได้ประโยชน์จาก cache และแบบไหนไม่มีวันได้ประโยชน์*
 
->
+> Benefit from cache:
+
+    * Short, common, frequently repeated phrases (e.g. "อร่อย", "Great food!", "Too salty").
+    * Reviews that differ only in casing, extra spaces, or leading/trailing whitespace (e.g. "  Delicious! " and "delicious!"), because key() normalizes them to identical keys.
+
+> Never benefit:
+    * Unique, long, or detailed narrative reviews that are submitted only once.
+    * The first time any review is seen (cold cache miss).
+    * Reviews whose entries were evicted from the cache because max_size was reached before the review was seen again.
 
 **Q3.2** Next week you deploy a better large model. What must happen to the cache, and how would you design for it?
 
 *สัปดาห์หน้าจะ deploy large model ตัวใหม่ที่ดีกว่าเดิม ต้องทำอะไรกับ cache และจะออกแบบรองรับเรื่องนี้อย่างไร*
 
->
+> **What must happen**:
+  * The cache holds predictions from the **old model** (stale data). If left untouched, users will still receive the old model's predictions instead of the better model's results.
+  * The cache must be **invalidated (flushed or cleared)**.
+
+> **How to design for it**:
+  1. **Key Versioning (Recommended)**: Include the model identifier/version in the cache key:
+     $$ \text{key} = \text{model\_version} + \text{":"} + \text{normalized\_text} $$
+     When a new model is deployed, old cache entries are automatically ignored.
+  2. **Flush on Deployment / Startup**: Clear `self._data` upon server startup or trigger an admin purge endpoint (e.g. `POST /admin/cache/flush`).
+  3. **TTL (Time-To-Live)**: Add an expiration timestamp to entries so stale predictions naturally expire.
 
 ## Debrief
 
