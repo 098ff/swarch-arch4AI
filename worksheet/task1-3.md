@@ -77,28 +77,42 @@ Cost / Compute: 100% of requests hit the expensive large model, consuming GPU/AP
 
 | Run | threshold | p50 ms | p95 ms | accuracy | large calls |
 |---|---|---|---|---|---|
-| t2-0.6 | 0.6 | | | | |
-| t2-0.7 | 0.7 | | | | |
-| t2-0.8 | 0.8 | | | | |
-| t2-0.9 | 0.9 | | | | |
+| t2-0.6 | 0.6 | 7 | 541 | 91.5% | 38% |
+| t2-0.7 | 0.7 | 369 | 570 | 93.0% | 53% |
+| t2-0.8 | 0.8 | 444 | 599 | 93.5% | 64% |
+| t2-0.9 | 0.9 | 478 | 596 | 93.5% | 77% |
 
 **Q2.1** Which threshold would you deploy for CampusEats, and why? Name the quality you give up.
 
 *จะเลือก threshold ใดสำหรับ deploy ใน CampusEats เพราะอะไร และต้องยอมเสีย quality ใดไป*
 
->
+> Threshold 0.6: Achieves 91.5% accuracy (exceeding QR3's 90% requirement) while sending only 38% of calls to the large model (saving 62% of large model cost!) and dropping p50 to 7 ms.
+
+    * Quality given up: A small amount of Accuracy (-2.0% compared to large model's 93.5%).
+
+> Threshold 0.7: Reaches 93.0% accuracy (almost identical to the large model's 93.5%) with 53% large calls.
+
+    * Quality given up: Moderate Cost / Performance compared to 0.6 (more calls sent to the large model and higher p50).
+
+> (Tip: Either 0.6 or 0.7 is a strong engineering choice depending on whether your priority is cost minimization or near-perfect accuracy).
 
 **Q2.2** Look at p50 and p95 for your threshold. Why does the cascade help p50 much more than p95?
 
 *ดูค่า p50 และ p95 ของ threshold ที่เลือก ทำไม cascade จึงช่วย p50 ได้มากกว่า p95 มาก*
 
->
+> **p50 (Median):** With threshold 0.6, 62% of requests are answered by the small model alone (<10 ms). Because more than half of all requests never touch the large model, the median request is handled in just 7 ms.
+
+> **p95 (Tail latency):** Since 38% of requests still escalate to the large model (and 38% > 5%), the 95th percentile request is always one that was sent to the large model. It experiences the large model's ~200 ms latency plus queueing delay, keeping p95 around 540–600 ms.
 
 **Q2.3** The cascade trusts the small model's confidence. Give one situation where that trust is misplaced, and its effect on users.
 
 *cascade เชื่อ confidence ของ small model ยกตัวอย่างหนึ่งสถานการณ์ที่ไม่ควรเชื่อ และผลที่เกิดกับผู้ใช้*
 
->
+> **Situation:** Negations or contrasting sentences (e.g., "not bad at all", "not clean", or "good ambience but horrible food").
+
+> **Why:** The small model is a bag-of-words model. If it spots the word "good", it may assign a high confidence score (e.g., 0.85) to positive, completely missing the "not".
+
+> **Effect on users:** A negative review is misclassified as positive. The restaurant owner is not alerted to a serious complaint, eroding trust in the platform.
 
 ## Task 3: Cached predictions (copy the Task 3 results from `results/runs.csv` here / copy ผลลัพธ์ของ Task 3 จาก `results/runs.csv` มาวางที่นี่)
 
