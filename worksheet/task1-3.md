@@ -16,14 +16,19 @@ Copy result rows from `results/runs.csv` (or the load test's output) into the ta
 
 | Run | p50 ms | p95 ms | accuracy | large calls |
 |---|---|---|---|---|
-| t0-large | | | | |
-| t0-small | | | | |
+| t0-large | 490 | 587 | 93.5% | 100% |
+| t0-small | 9 | 21 | 72.5% | 0% |
 
 **Q0.** What does the large model buy, and what does it cost?
 
 *large model ให้อะไรเพิ่ม และต้องแลกด้วยอะไร*
 
->
+> **What it buys (ข้อดี):** 
+The large model provides significantly higher accuracy (93.5% vs 72.5%, an increase of +21.0 percentage points) because it analyzes n-grams and understands negation phrases like "not bad".
+
+> **What it costs (สิ่งที่ต้องแลก):**
+Latency: Much slower response times (p50 of 490 ms vs 9 ms; p95 of 587 ms vs 21 ms).
+Cost / Compute: 100% of requests hit the expensive large model, consuming GPU/API budget and limited concurrency slots.
 
 ## Task 1: Fallback prediction (copy the Task 1 results from `results/runs.csv` here / copy ผลลัพธ์ของ Task 1 จาก `results/runs.csv` มาวางที่นี่)
 
