@@ -8,7 +8,7 @@ This is **individual work**: each student completes and submits their own copy, 
 
 *งานนี้เป็น**งานเดี่ยว** นิสิตแต่ละคนทำและส่งงานของตัวเอง ใน fork ของตัวเอง*
 
-**Scenario (A, B or C) / Scenario ที่เลือก:**
+**Scenario (A, B or C) / Scenario ที่เลือก:** A
 
 Choose **one** scenario below. If the last digit of your student ID is odd, take A or B; if it is even, take B or C. Use your measurements from Tutorial 6 as evidence: cite run names from `results/runs.csv`. Answer in Thai or English.
 
@@ -58,9 +58,9 @@ The three most important quality requirements for your scenario, each with a num
 
 | # | Quality | Requirement |
 |---|---|---|
-| 1 | | |
-| 2 | | |
-| 3 | | |
+| 1 | Performance (Latency) | Push notification delivered to the restaurant owner within 2.0 seconds of review submission (p95 <= 2.0 s). |
+| 2 | Capacity / Throughput | Must sustain lunch peak of 40 reviews/second while keeping large model calls <= 20 calls/second. |
+| 3 | Accuracy | Sentiment accuracy >= 90% (target >= 93%) to prevent false negative alerts from damaging owner trust. |
 
 ## 2. Design / การออกแบบ
 
@@ -68,16 +68,31 @@ Your topology, the patterns you add, and a container-level diagram (C4 level 2).
 
 *topology ที่เลือก pattern ที่เพิ่ม และ diagram ระดับ container (C4 level 2) เขียนด้วย Mermaid*
 
+**Topology & Patterns:**
+- **Topology**: **T3 (Hybrid)** / **T1 (Model as a Service)** with remote Inference Service
+- **Patterns**:
+  - **Prediction Cache**: Normalized LRU cache in front of models to answer repeated common reviews with zero latency and zero inference cost.
+  - **Cascade (confidence threshold = 0.7)**: Queries the fast small model first; only escalates ambiguous reviews (confidence < 0.7) to the expensive large model.
+  - **Fallback**: 1.0-second timeout on inference calls that gracefully degrades to `pending` review status rather than violating the 2-second alert deadline or failing requests.
+
 ```mermaid
 C4Container
-    title Your design: container diagram
-    %% Replace the example below with your own people, containers and relationships.
-    %% See the CampusEats C4 diagram in README.md for the full syntax.
-    Person(customer, "Customer", "Writes restaurant reviews")
+    title CampusEats: Scenario A Container Diagram
+    Person(customer, "Customer", "Writes and posts restaurant reviews via mobile app")
+    Person(owner, "Restaurant Owner", "Receives push notification alerts for negative reviews")
+
     System_Boundary(campuseats, "CampusEats") {
-        Container(review, "Review service", "Python, FastAPI", "What it does")
+        Container(gateway, "API Gateway", "Python, FastAPI, :8000", "Entry point, routes /api/reviews and handles auth")
+        Container(review, "Review Service", "Python, FastAPI, :8001", "Stores reviews, manages Prediction Cache, triggers owner alerts")
+        Container(inference, "Inference Service", "Python, FastAPI, scikit-learn, :8002", "Hosts small model and large model (Cascade pattern)")
+        Container(push, "Push Notification Service", "Firebase Cloud Messaging / APNs", "Delivers mobile push notifications within 2 seconds")
     }
-    Rel(customer, review, "Posts reviews", "HTTP/JSON")
+
+    Rel(customer, gateway, "Posts review", "HTTPS/JSON")
+    Rel(gateway, review, "Forwards review request", "HTTP/JSON")
+    Rel(review, inference, "POST /predict (Cache miss & Cascade escalation)", "HTTP/REST")
+    Rel(review, push, "Sends alert if review is negative", "HTTPS")
+    Rel(push, owner, "Delivers push notification (< 2s)", "APNs / FCM")
 ```
 
 ## 3. Evidence / หลักฐาน
@@ -88,8 +103,24 @@ Which runs support your choice? Show the numbers and, for scenario A, the capaci
 
 | Run | What it shows / แสดงอะไร |
 |---|---|
-| | |
-| | |
+| t0-large | Baseline: 93.5% accuracy, but requires 100% large calls (exceeds 20 calls/s limit at 40 req/s peak) |
+| t2-0.7 | Cascade (0.7): 93.0% accuracy with only 53% large calls (369 ms p50) |
+| t3-cache | Cascade + Cache: 93.0% accuracy, 35% cache hits, drops large calls to 38% (15.2 calls/s at peak), p95 is 535 ms (< 2.0 s) |
+
+**Capacity Arithmetic at Lunch Peak (40 reviews/s):**
+- **Incoming peak rate**: 40 reviews/second.
+- **Large model capacity ceiling**: 20 calls/second (4 concurrent calls x ~200 ms latency).
+- **Impact of Cache (35% hit rate from `t3-cache`)**:
+  - Reviews resolved by cache: 40 x 0.35 = 14 reviews/second (requiring 0 model calls).
+  - Uncached reviews reaching Cascade: 40 - 14 = 26 reviews/second.
+- **Impact of Cascade (threshold 0.7)**:
+  - From `t3-cache` measurements, total large calls were 38%:
+    $$\text{Peak Large Calls} = 40 \times 0.38 = \mathbf{15.2 \text{ calls/second}}$$
+- **Capacity verification**:
+  $$\mathbf{15.2 \text{ calls/second}} \le \mathbf{20 \text{ calls/second capacity limit}}$$
+  The design safely stays under the maximum throughput of the large model during peak lunch rush.
+- **Latency verification**:
+  - Measured $p95$ latency in `t3-cache` is **535 ms**, well within the 2.0-second alert deadline ($535\text{ ms} \ll 2000\text{ ms}$), leaving ample budget (~1.4s) for the push notification service.
 
 ## 4. ADR
 
@@ -97,20 +128,31 @@ Use the ADR format from W5.
 
 *ใช้รูปแบบ ADR จาก W5*
 
-**Title:**
+**Title:** ADR: Hybrid Serving Architecture with Cascade, Normalized Cache, and Fallback for Real-Time Sentiment Alerts
 
 **Status:** Proposed
 
 **Context:**
+CampusEats requires push notifications delivered to restaurant owners within 2 seconds whenever a customer submits a negative review. During the lunch peak, traffic surges to 40 reviews/second. However, the expensive large sentiment model can serve at most 20 calls/second (4 concurrent slots x ~200 ms). Furthermore, false negative alerts erode owner trust, so high accuracy (>= 90%) must be maintained.
 
 **Decision:**
+We adopt a hybrid multi-tier serving architecture combining:
+1. **Normalized LRU Prediction Cache**: Preempts model invocation for common phrases (~35% cache hits).
+2. **Cascade Pattern (Threshold 0.7)**: Queries the fast small model first, escalating only ambiguous predictions (confidence < 0.7) to the remote large model.
+3. **Fallback Prediction (1.0s Timeout)**: Drops timed-out or failed inference requests to `pending` status instead of blocking or dropping reviews, ensuring the 2-second alert deadline is not violated.
 
 **Consequences:**
-- Positive:
-- Negative:
+- **Positive**:
+  - **Capacity**: Reduces peak large model calls from 40 calls/s to 15.2 calls/s, operating safely within the 20 calls/s limit.
+  - **Latency**: Achieves a p95 latency of 535 ms, comfortably meeting the 2.0-second push notification requirement.
+  - **Accuracy**: Delivers 93.0% accuracy (matching QR3 >= 90%), preventing false alerts.
+  - **Fault Tolerance**: Fallback ensures 0 client-side errors during latency spikes or transient model hangs.
+- **Negative**:
+  - **Complexity**: Managing cache invalidation upon model retraining and maintaining dual model versions.
+  - **Accuracy Trade-off**: Yields a minor 0.5% accuracy trade-off compared to a 100% large model deployment (93.0% vs 93.5%).
 
-**Alternatives considered:** at least one topology you rejected, and why.
-
-*อย่างน้อยหนึ่ง topology ที่ไม่เลือก และเหตุผล*
-
->
+**Alternatives considered:**
+- **Rejected Topology T1 (Pure Synchronous Model as a Service without Cascade/Cache)**:
+  Routing all 40 reviews/s to the large model exceeds its 20 calls/s ceiling by 100%, causing severe queue buildup, client timeouts, and catastrophic failure during peak hours.
+- **Rejected Topology T4 (Asynchronous / Batch Processing)**:
+  Batch processing cannot guarantee delivery of notifications within the strict 2-second real-time window required for owner alerts.
