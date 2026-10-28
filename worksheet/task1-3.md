@@ -23,12 +23,7 @@ Copy result rows from `results/runs.csv` (or the load test's output) into the ta
 
 *large model ให้อะไรเพิ่ม และต้องแลกด้วยอะไร*
 
-> **What it buys (ข้อดี):** 
-The large model provides significantly higher accuracy (93.5% vs 72.5%, an increase of +21.0 percentage points) because it analyzes n-grams and understands negation phrases like "not bad".
-
-> **What it costs (สิ่งที่ต้องแลก):**
-Latency: Much slower response times (p50 of 490 ms vs 9 ms; p95 of 587 ms vs 21 ms).
-Cost / Compute: 100% of requests hit the expensive large model, consuming GPU/API budget and limited concurrency slots.
+> The large model buys an accuracy gain of +21.0% (93.5% vs 72.5% for small) by understanding word combinations and negations. However, it costs significantly higher latency (p50 of 490 ms vs 9 ms) and requires 100% large model calls, consuming expensive compute and limited concurrency slots.
 
 ## Task 1: Fallback prediction (copy the Task 1 results from `results/runs.csv` here / copy ผลลัพธ์ของ Task 1 จาก `results/runs.csv` มาวางที่นี่)
 
@@ -41,37 +36,25 @@ Cost / Compute: 100% of requests hit the expensive large model, consuming GPU/AP
 
 *ใน `t1-before` ค่า p50 อาจดู "ดีกว่า" baseline ทำไม p50 จึงทำให้เข้าใจผิดในกรณีนี้ และ column ไหนบอกความจริง*
 
-> Observation: In t1-before, p50 appears to be 244 ms (which looks faster than t0-large's 490 ms!).
-
-> Why it's misleading: loadtest.py computes percentiles (p50, p95) only on successful requests. Requests that hung for >10 s timed out on the client side and were dropped into errors. They were excluded from the latency calculations, artificially deflating p50.
-
-> Columns that tell the truth: Look at errors (21 requests failed completely) and total run time (30.3 s vs 9.7 s).
+> In `t1-before`, p50 looks misleadingly fast (244 ms vs 490 ms baseline) because `loadtest.py` calculates percentiles only across successful requests. The 21 requests that hung for >10 s were dropped into `errors` and excluded from latency calculations. The `errors` column (21 failures) and total run time (30.3 s vs 9.7 s) tell the real story of severe degradation.
 
 **Q1.2** The hang affects only 10% of large-model calls. Why is it worse for the system than 10% of reviews being slow? Think about what a waiting request holds on to in the review service and the gateway.
 
 *การค้างเกิดกับ calls ไปยัง large model แค่ 10% ทำไมจึงส่งผลต่อระบบแย่กว่าการที่รีวิว 10% ช้าลงเฉยๆ ลองคิดว่า request ที่รออยู่ถือทรัพยากรอะไรไว้ใน review service และ gateway*
 
-> Resource Exhaustion / Head-of-line blocking:
-
-    * The large model only allows 4 concurrent calls (LARGE_CAPACITY = 4). When calls hang for 20 seconds, all 4 concurrency slots quickly become occupied.
-    * In review_service and gateway, each hanging request ties up an open socket, HTTP connection, memory buffer, and event loop coroutine.
-    * Even non-hanging requests get queued behind the hung ones, causing a cascade of delays across the entire system.
+> Because the large model allows only 4 concurrent calls (`LARGE_CAPACITY = 4`), a few hung calls quickly consume all concurrency slots for 20 seconds. Each waiting request ties up an open HTTP socket, memory, and async worker thread in the gateway and review service. This creates head-of-line blocking that queues up healthy requests until they also time out as errors.
 
 **Q1.3** Pending reviews have no label. Suggest what should happen to them, and name the topology from the lecture that does it.
 
 *รีวิวที่ pending ยังไม่มี label ควรจัดการกับรีวิวเหล่านี้อย่างไร และ topology ใดจาก lecture ที่ทำแบบนั้น*
 
-> What to do: Since the review text is already safely saved in the database, a background worker can pick up unlabelled pending reviews later (e.g. during off-peak hours) and send them for sentiment scoring.
-
-> Topology name: Topology T4: Asynchronous / Batch processing (using a message queue / broker / scheduled background job).
+> Pending reviews should be safely saved in the database and scored later by an offline batch job or background worker once inference capacity recovers. This corresponds to Topology T4 (Asynchronous / Batch processing) using a message broker or scheduled job.
 
 **Q1.4** We chose a 1-second timeout. What goes wrong if it is 0.1 s? And if it is 10 s?
 
 *เราเลือก timeout 1 วินาที จะเกิดปัญหาอะไรถ้าตั้งเป็น 0.1 วินาที และถ้าตั้งเป็น 10 วินาที*
 
-> If 0.1 s (100 ms): Normal large model inference takes ~200 ms. A 0.1 s timeout is shorter than normal healthy latency, causing healthy requests to prematurely timeout. Nearly all reviews would unnecessarily end up as pending.
-
-> If 10 s: Hanging requests hold server connections and concurrency slots for 10 full seconds. Tail latency (p95) skyrockets to 10 seconds, client buffers fill up, and users experience a terrible waiting delay before fallback kicks in.
+> A 0.1 s timeout causes false timeouts because the large model normally takes ~200 ms, unnecessarily dropping almost all reviews to pending. A 10 s timeout lets hung requests hold concurrency slots for too long, blowing tail latency to 10 s. With 1.0 s, `t1-after` keeps p95 at 1011 ms (bordering QR1's 1-second limit) while trading 28 reviews (14%) to `pending` to guarantee 0 errors and preserve availability (QR2).
 
 ## Task 2: Cascade (copy the Task 2 results from `results/runs.csv` here / copy ผลลัพธ์ของ Task 2 จาก `results/runs.csv` มาวางที่นี่)
 
@@ -86,33 +69,19 @@ Cost / Compute: 100% of requests hit the expensive large model, consuming GPU/AP
 
 *จะเลือก threshold ใดสำหรับ deploy ใน CampusEats เพราะอะไร และต้องยอมเสีย quality ใดไป*
 
-> Threshold 0.6: Achieves 91.5% accuracy (exceeding QR3's 90% requirement) while sending only 38% of calls to the large model (saving 62% of large model cost!) and dropping p50 to 7 ms.
-
-    * Quality given up: A small amount of Accuracy (-2.0% compared to large model's 93.5%).
-
-> Threshold 0.7: Reaches 93.0% accuracy (almost identical to the large model's 93.5%) with 53% large calls.
-
-    * Quality given up: Moderate Cost / Performance compared to 0.6 (more calls sent to the large model and higher p50).
-
-> (Tip: Either 0.6 or 0.7 is a strong engineering choice depending on whether your priority is cost minimization or near-perfect accuracy).
+> I would deploy threshold 0.7 for CampusEats. It achieves 93.0% accuracy (surpassing QR3's >= 90% target and close to the large model's 93.5%) while reducing large model calls to 53%, comfortably meeting QR5's capacity constraint (< 20 calls/s). The quality given up is a small amount of cost and latency compared to threshold 0.6 in exchange for higher label accuracy.
 
 **Q2.2** Look at p50 and p95 for your threshold. Why does the cascade help p50 much more than p95?
 
 *ดูค่า p50 และ p95 ของ threshold ที่เลือก ทำไม cascade จึงช่วย p50 ได้มากกว่า p95 มาก*
 
-> **p50 (Median):** With threshold 0.6, 62% of requests are answered by the small model alone (<10 ms). Because more than half of all requests never touch the large model, the median request is handled in just 7 ms.
-
-> **p95 (Tail latency):** Since 38% of requests still escalate to the large model (and 38% > 5%), the 95th percentile request is always one that was sent to the large model. It experiences the large model's ~200 ms latency plus queueing delay, keeping p95 around 540–600 ms.
+> At threshold 0.7, 47% of requests are answered immediately by the small model (<10 ms), pulling median latency (p50) down from 490 ms to 369 ms. In contrast, 53% of requests still escalate to the large model; because 53% is far greater than 5%, the 95th percentile request is always one that incurred both the small model check and the large model wait, leaving p95 virtually unchanged at 570 ms.
 
 **Q2.3** The cascade trusts the small model's confidence. Give one situation where that trust is misplaced, and its effect on users.
 
 *cascade เชื่อ confidence ของ small model ยกตัวอย่างหนึ่งสถานการณ์ที่ไม่ควรเชื่อ และผลที่เกิดกับผู้ใช้*
 
-> **Situation:** Negations or contrasting sentences (e.g., "not bad at all", "not clean", or "good ambience but horrible food").
-
-> **Why:** The small model is a bag-of-words model. If it spots the word "good", it may assign a high confidence score (e.g., 0.85) to positive, completely missing the "not".
-
-> **Effect on users:** A negative review is misclassified as positive. The restaurant owner is not alerted to a serious complaint, eroding trust in the platform.
+> Trust is misplaced on sentences with negations or contrast (e.g., "The soup was not good" or "great ambience but awful food"). The bag-of-words small model spots words like "good" or "great" and outputs high confidence for positive, ignoring "not". This misclassifies a dissatisfied customer's review as positive, preventing restaurant owners from receiving critical complaint alerts.
 
 ## Task 3: Cached predictions (copy the Task 3 results from `results/runs.csv` here / copy ผลลัพธ์ของ Task 3 จาก `results/runs.csv` มาวางที่นี่)
 
@@ -124,30 +93,13 @@ Cost / Compute: 100% of requests hit the expensive large model, consuming GPU/AP
 
 *รีวิวแบบไหนได้ประโยชน์จาก cache และแบบไหนไม่มีวันได้ประโยชน์*
 
-> Benefit from cache:
-
-    * Short, common, frequently repeated phrases (e.g. "อร่อย", "Great food!", "Too salty").
-    * Reviews that differ only in casing, extra spaces, or leading/trailing whitespace (e.g. "  Delicious! " and "delicious!"), because key() normalizes them to identical keys.
-
-> Never benefit:
-    * Unique, long, or detailed narrative reviews that are submitted only once.
-    * The first time any review is seen (cold cache miss).
-    * Reviews whose entries were evicted from the cache because max_size was reached before the review was seen again.
+> Short, common, and repetitive reviews (e.g., "อร่อย", "Too salty") and reviews with varying spaces or casing benefit because `key()` normalizes them to identical entries. Long, unique narrative reviews submitted once, initial cold misses, or reviews evicted due to the `max_size` limit will never benefit.
 
 **Q3.2** Next week you deploy a better large model. What must happen to the cache, and how would you design for it?
 
 *สัปดาห์หน้าจะ deploy large model ตัวใหม่ที่ดีกว่าเดิม ต้องทำอะไรกับ cache และจะออกแบบรองรับเรื่องนี้อย่างไร*
 
-> **What must happen**:
-  * The cache holds predictions from the **old model** (stale data). If left untouched, users will still receive the old model's predictions instead of the better model's results.
-  * The cache must be **invalidated (flushed or cleared)**.
-
-> **How to design for it**:
-  1. **Key Versioning (Recommended)**: Include the model identifier/version in the cache key:
-     $$ \text{key} = \text{model\_version} + \text{":"} + \text{normalized\_text} $$
-     When a new model is deployed, old cache entries are automatically ignored.
-  2. **Flush on Deployment / Startup**: Clear `self._data` upon server startup or trigger an admin purge endpoint (e.g. `POST /admin/cache/flush`).
-  3. **TTL (Time-To-Live)**: Add an expiration timestamp to entries so stale predictions naturally expire.
+> The cache holds stale predictions from the old model and must be invalidated. To design for this, the cache key should include the model version namespace (e.g., `f"{model_id}:{normalized_text}"`) so new model deployments automatically bypass old entries, combined with an administrative cache flush endpoint on startup.
 
 ## Debrief
 
@@ -155,4 +107,4 @@ Cost / Compute: 100% of requests hit the expensive large model, consuming GPU/AP
 
 *ยกตัวอย่างหนึ่งสิ่งที่ได้เรียนรู้จากการวัดผลครั้งนี้ ที่ไม่มีพูดถึงใน lecture*
 
-> "The lecture presented the cascade pattern as reducing latency and cost, but our measurements revealed that cascade only dramatically improves median latency (p50), while having almost no effect on tail latency (p95). This happens because the 95th percentile requests are almost always those that escalate to the slow large model."
+> While the lecture presents cascade as reducing latency and cost, our measurements showed that cascade drastically slashes median latency (p50 dropped from 490 ms to 369 ms at threshold 0.7, and 7 ms at 0.6) but has almost no effect on tail latency (p95 remained around 541–570 ms vs 587 ms baseline). In addition, `t1-before` revealed how partial failure can paradoxically deflate p50 (from 490 ms to 244 ms) because the 21 failed requests were excluded from the latency calculation.

@@ -69,11 +69,12 @@ Your topology, the patterns you add, and a container-level diagram (C4 level 2).
 *topology ที่เลือก pattern ที่เพิ่ม และ diagram ระดับ container (C4 level 2) เขียนด้วย Mermaid*
 
 **Topology & Patterns:**
-- **Topology**: **T3 (Hybrid)** / **T1 (Model as a Service)** with remote Inference Service
-- **Patterns**:
-  - **Prediction Cache**: Normalized LRU cache in front of models to answer repeated common reviews with zero latency and zero inference cost.
-  - **Cascade (confidence threshold = 0.7)**: Queries the fast small model first; only escalates ambiguous reviews (confidence < 0.7) to the expensive large model.
-  - **Fallback**: 1.0-second timeout on inference calls that gracefully degrades to `pending` review status rather than violating the 2-second alert deadline or failing requests.
+- **Topology**: **T1 (Model as a Service, synchronous)**
+  - All ML models and serving patterns run within the dedicated `Inference Service`, called synchronously over HTTP from `Review Service`. This maintains clear separation of concerns, decouples heavy ML dependencies from business logic, and allows the inference service to scale independently behind a load balancer.
+- **Patterns added**:
+  - **Prediction Cache**: Normalized LRU cache located inside `Inference Service` to answer repeated common reviews with zero latency and zero model calls (~35% hit rate).
+  - **Cascade (confidence threshold = 0.7)**: Inside `Inference Service`, evaluates the fast small model first and only escalates ambiguous reviews (confidence < 0.7) to the slow large model.
+  - **Fallback**: 1.0-second timeout inside `Review Service` (`classify()`) that gracefully degrades to `pending` review status rather than violating the 2-second alert deadline or crashing requests.
 
 ```mermaid
 C4Container
@@ -83,14 +84,14 @@ C4Container
 
     System_Boundary(campuseats, "CampusEats") {
         Container(gateway, "API Gateway", "Python, FastAPI, :8000", "Entry point, routes /api/reviews and handles auth")
-        Container(review, "Review Service", "Python, FastAPI, :8001", "Stores reviews, manages Prediction Cache, triggers owner alerts")
-        Container(inference, "Inference Service", "Python, FastAPI, scikit-learn, :8002", "Hosts small model and large model (Cascade pattern)")
-        Container(push, "Push Notification Service", "Firebase Cloud Messaging / APNs", "Delivers mobile push notifications within 2 seconds")
+        Container(review, "Review Service", "Python, FastAPI, :8001", "Stores reviews, handles fallback timeout, triggers owner alerts")
+        Container(inference, "Inference Service", "Python, FastAPI, scikit-learn, :8002", "Hosts Prediction Cache, small model, and large model (Cascade)")
+        Container(push, "Push Notification Service", "External FCM / APNs", "External component: Delivers mobile push notifications within 2 seconds")
     }
 
     Rel(customer, gateway, "Posts review", "HTTPS/JSON")
     Rel(gateway, review, "Forwards review request", "HTTP/JSON")
-    Rel(review, inference, "POST /predict (Cache miss & Cascade escalation)", "HTTP/REST")
+    Rel(review, inference, "POST /predict (Synchronous REST)", "HTTP/REST")
     Rel(review, push, "Sends alert if review is negative", "HTTPS")
     Rel(push, owner, "Delivers push notification (< 2s)", "APNs / FCM")
 ```
@@ -120,7 +121,9 @@ Which runs support your choice? Show the numbers and, for scenario A, the capaci
   $$\mathbf{15.2 \text{ calls/second}} \le \mathbf{20 \text{ calls/second capacity limit}}$$
   The design safely stays under the maximum throughput of the large model during peak lunch rush.
 - **Latency verification**:
-  - Measured $p95$ latency in `t3-cache` is **535 ms**, well within the 2.0-second alert deadline ($535\text{ ms} \ll 2000\text{ ms}$), leaving ample budget (~1.4s) for the push notification service.
+  - Measured $p95$ latency in `t3-cache` is **535 ms**, well within the 2.0-second alert deadline ($535\text{ ms} \ll 2000\text{ ms}$), leaving ample budget (~1.4s) for the external push notification service.
+- **Note on load test concurrency vs production**:
+  - The load test was run with concurrency 10 (`-c 10`). While it successfully proves the per-request reduction to 15.2 calls/s below the large model's ceiling, sustaining a full 40 req/s throughput in production also requires provisioning adequate worker processes for the API Gateway and Review Service.
 
 ## 4. ADR
 
@@ -128,7 +131,7 @@ Use the ADR format from W5.
 
 *ใช้รูปแบบ ADR จาก W5*
 
-**Title:** ADR: Hybrid Serving Architecture with Cascade, Normalized Cache, and Fallback for Real-Time Sentiment Alerts
+**Title:** ADR: Synchronous Model as a Service with Cascade, Prediction Cache, and Fallback for Real-Time Sentiment Alerts
 
 **Status:** Proposed
 
@@ -136,10 +139,10 @@ Use the ADR format from W5.
 CampusEats requires push notifications delivered to restaurant owners within 2 seconds whenever a customer submits a negative review. During the lunch peak, traffic surges to 40 reviews/second. However, the expensive large sentiment model can serve at most 20 calls/second (4 concurrent slots x ~200 ms). Furthermore, false negative alerts erode owner trust, so high accuracy (>= 90%) must be maintained.
 
 **Decision:**
-We adopt a hybrid multi-tier serving architecture combining:
-1. **Normalized LRU Prediction Cache**: Preempts model invocation for common phrases (~35% cache hits).
-2. **Cascade Pattern (Threshold 0.7)**: Queries the fast small model first, escalating only ambiguous predictions (confidence < 0.7) to the remote large model.
-3. **Fallback Prediction (1.0s Timeout)**: Drops timed-out or failed inference requests to `pending` status instead of blocking or dropping reviews, ensuring the 2-second alert deadline is not violated.
+We adopt Topology T1 (Model as a Service, synchronous) combining three serving patterns:
+1. **Prediction Cache (in Inference Service)**: A normalized LRU cache that resolves frequent repeated reviews with 0 inference cost (~35% cache hits).
+2. **Cascade Pattern (in Inference Service, Threshold 0.7)**: Evaluates the fast small model first, escalating only ambiguous predictions (confidence < 0.7) to the remote large model.
+3. **Fallback Prediction (in Review Service, 1.0s Timeout)**: Drops timed-out or failed inference requests to `pending` status instead of blocking, ensuring requests never exceed the 2-second alert deadline.
 
 **Consequences:**
 - **Positive**:
@@ -147,12 +150,15 @@ We adopt a hybrid multi-tier serving architecture combining:
   - **Latency**: Achieves a p95 latency of 535 ms, comfortably meeting the 2.0-second push notification requirement.
   - **Accuracy**: Delivers 93.0% accuracy (matching QR3 >= 90%), preventing false alerts.
   - **Fault Tolerance**: Fallback ensures 0 client-side errors during latency spikes or transient model hangs.
+  - **Modularity**: Keeping models inside Inference Service allows independent scaling without bloating Review Service.
 - **Negative**:
-  - **Complexity**: Managing cache invalidation upon model retraining and maintaining dual model versions.
+  - **Complexity**: Requires managing cache invalidation upon model updates and coordinating dual models.
   - **Accuracy Trade-off**: Yields a minor 0.5% accuracy trade-off compared to a 100% large model deployment (93.0% vs 93.5%).
 
 **Alternatives considered:**
-- **Rejected Topology T1 (Pure Synchronous Model as a Service without Cascade/Cache)**:
+- **Rejected Topology T1 without patterns (Baseline)**:
   Routing all 40 reviews/s to the large model exceeds its 20 calls/s ceiling by 100%, causing severe queue buildup, client timeouts, and catastrophic failure during peak hours.
+- **Rejected Topology T2 (Model as a Library inside Review Service)**:
+  Embedding the large model into Review Service couples heavyweight ML dependencies (scikit-learn, GPU libraries) into business logic and consumes high memory per web worker, preventing independent horizontal scaling.
 - **Rejected Topology T4 (Asynchronous / Batch Processing)**:
-  Batch processing cannot guarantee delivery of notifications within the strict 2-second real-time window required for owner alerts.
+  Batching reviews cannot guarantee delivery of notifications within the strict 2-second real-time window required for owner alerts.
