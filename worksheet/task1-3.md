@@ -1,8 +1,8 @@
 # Tutorial 6 worksheet: serving patterns
 
-**Name / ชื่อ:**
+**Name / ชื่อ:** Chanatda Konchom
 
-**Student ID / รหัสนิสิต:**
+**Student ID / รหัสนิสิต:** 6631305321
 
 This is **individual work**: each student completes and submits their own copy, in their own fork.
 
