@@ -155,4 +155,4 @@ Cost / Compute: 100% of requests hit the expensive large model, consuming GPU/AP
 
 *ยกตัวอย่างหนึ่งสิ่งที่ได้เรียนรู้จากการวัดผลครั้งนี้ ที่ไม่มีพูดถึงใน lecture*
 
->
+> "The lecture presented the cascade pattern as reducing latency and cost, but our measurements revealed that cascade only dramatically improves median latency (p50), while having almost no effect on tail latency (p95). This happens because the 95th percentile requests are almost always those that escalate to the slow large model."
